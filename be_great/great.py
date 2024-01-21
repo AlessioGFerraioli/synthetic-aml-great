@@ -1,12 +1,14 @@
 '''
 
-from be-great==0.0.4
-sample2 function was added and added the import of _convert_text_to_tabular_data_2
-the rest is stock
+originally from be-great==0.0.4
+edited version by Alessio Giuseppe Ferraioli
+2024.01.14 last edit 
 
-edited version by alessio
-2024.01.14 
-on 2024.01.14 it was working 
+
+summary of the edits to the original:
+- new GReaT.sample method
+
+see readme.md for detailed info
 
 
 '''
@@ -31,7 +33,7 @@ from be_great.great_dataset import GReaTDataset, GReaTDataCollator
 from be_great.great_start import GReaTStart, CategoricalStart, ContinuousStart, RandomStart
 from be_great.great_trainer import GReaTTrainer
 from be_great.great_utils import _array_to_dataframe, _get_column_distribution, _convert_tokens_to_text, \
-    _convert_text_to_tabular_data, _convert_text_to_tabular_data_2
+    _convert_text_to_tabular_data
 
 
 class GReaT:
@@ -156,20 +158,19 @@ class GReaT:
         # Move model to device
         self.model.to(device)
 
-        # Init empty DataFrame for the generated samples
+        # Init empty dataframe with column names
         df_gen = pd.DataFrame(columns=self.columns)
-
+        
         # Start generation process
         with tqdm(total=n_samples) as pbar:
             already_generated = 0
             while n_samples > df_gen.shape[0]:
                 start_tokens = great_start.get_start_tokens(k)
                 start_tokens = torch.tensor(start_tokens).to(device)
-
+    
                 # Generate tokens
                 tokens = self.model.generate(input_ids=start_tokens, max_length=max_length,
                                              do_sample=True, temperature=temperature, pad_token_id=50256)
-
                 # Convert tokens back to tabular data
                 text_data = _convert_tokens_to_text(tokens, self.tokenizer)
                 df_gen = _convert_text_to_tabular_data(text_data, df_gen)
@@ -177,91 +178,7 @@ class GReaT:
                 # Remove rows with flawed numerical values
                 for i_num_cols in self.num_cols:
                     df_gen = df_gen[pd.to_numeric(df_gen[i_num_cols], errors='coerce').notnull()]
-
-                # change type to float (NO! original great converts to float, but i don't want it)
-                # df_gen[self.num_cols] = df_gen[self.num_cols].astype(float)
-
-                # Remove rows with missing values
-                df_gen = df_gen.drop(df_gen[df_gen.isna().any(axis=1)].index)
-
-                # Update process bar
-                pbar.update(df_gen.shape[0] - already_generated)
-                already_generated = df_gen.shape[0]
-
-        df_gen = df_gen.reset_index(drop=True)
-        return df_gen.head(n_samples)
-
-
-    def sample2(self, n_samples: int,
-               start_col: tp.Optional[str] = "", start_col_dist: tp.Optional[tp.Union[dict, list]] = None,
-               temperature: float = 0.7, k: int = 100, max_length: int = 100, device: str = "cuda") -> pd.DataFrame:
-        """ Generate synthetic tabular data samples
-
-        Args:
-            n_samples: Number of synthetic samples to generate
-            start_col: Feature to use as starting point for the generation process. If not given, the target
-             learned during the fitting is used as starting point
-            start_col_dist: Feature distribution of the starting feature. Should have the format
-             "{F1: p1, F2: p2, ...}" for discrete columns or be a list of possible values for continuous columns.
-             If not given, the target distribution learned during the fitting is used as starting point
-            temperature: The generation samples each token from the probability distribution given by a softmax
-             function. The temperature parameter controls the softmax function. A low temperature makes it sharper
-             (0 equals greedy search), a high temperature brings more diversity but also uncertainty into the output.
-             See this blog article (https://huggingface.co/blog/how-to-generate) to read more about the generation
-             process
-            k: Sampling Batch Size. Set as high as possible. Speeds up the generation process significantly
-            max_length: Maximal number of tokens to generate - has to be long enough to not cut any information!
-            device: Set to "cpu" if the GPU should not be used. You can also specify the concrete GPU
-
-        Returns:
-            Pandas DataFrame with n_samples rows of generated data
-        """
-        great_start = self._get_start_sampler(start_col, start_col_dist)
-
-        # Move model to device
-        self.model.to(device)
-
-        # Init empty dataframe with column names
-        df_gen = pd.DataFrame(columns=self.columns)
-        # print(f"Init empty df_gen with column names\ndf_gen = {df_gen}")
-        # Init DataFrame full of zeros for the generated samples
-        # df_gen = pd.DataFrame("0", index=np.arange(n_samples), columns=self.columns)
-        # print("Init df_gen with zeros")
-        # print(df_gen)
-
-        
-        # Start generation process
-        with tqdm(total=n_samples) as pbar:
-            already_generated = 0
-            # print(">>already_generated = 0")
-            # print(f"already_generated = {already_generated}")
-            while n_samples > df_gen.shape[0]:
-                start_tokens = great_start.get_start_tokens(k)
-                # print("start_tokens = great_start.get_start_tokens(k)")
-                # print(f"start_tokens = {start_tokens}")
-                start_tokens = torch.tensor(start_tokens).to(device)
-    
-                # Generate tokens
-                tokens = self.model.generate(input_ids=start_tokens, max_length=max_length,
-                                             do_sample=True, temperature=temperature, pad_token_id=50256)
-                # print("tokens generated")
-                # Convert tokens back to tabular data
-                text_data = _convert_tokens_to_text(tokens, self.tokenizer)
-                # print("tokens converted to text")
-                # print(f"text data = {text_data}")
-                df_gen = _convert_text_to_tabular_data_2(text_data, df_gen)
-                # print("text converted to tabular data")
-                # print(f"df_gen = {df_gen}")
-
-                # print("remove rows with flawed numerical values")
-                # print(f"len(df_gen) before removing rows = {df_gen.shape[0]}")
-                # Remove rows with flawed numerical values
-                for i_num_cols in self.num_cols:
-                    df_gen = df_gen[pd.to_numeric(df_gen[i_num_cols], errors='coerce').notnull()]
-                # print(f"and after = {df_gen.shape[0]}")
-                
-                df_gen[self.num_cols] = df_gen[self.num_cols].astype(float)
-    
+                    
                 # Remove rows with missing values
                 df_gen = df_gen.drop(df_gen[df_gen.isna().any(axis=1)].index)
     

@@ -1,12 +1,14 @@
 '''
 
-from be-great==0.0.4
-_convert_text_to_tabular_data_2 function was added, the rest is stock
+originally from be-great==0.0.4
+edited version by Alessio Giuseppe Ferraioli
+2024.01.14 last edit 
 
-edited version by alessio
-2024.01.14 
-on 2024.01.14 it was working 
 
+summary of the edits to the original:
+- new _convert_text_to_tabular_data function
+
+see readme.md for detailed info
 
 '''
 
@@ -77,59 +79,7 @@ def _convert_tokens_to_text(tokens: tp.List[torch.Tensor], tokenizer: AutoTokeni
     text_data = [d.replace("\r", "") for d in text_data]
 
     return text_data
-
-
-def _convert_text_to_tabular_data_2(text: tp.List[str], df_gen: pd.DataFrame) -> pd.DataFrame:
-    """ Converts the sentences back to tabular data
-
-    Args:
-        text: List of the tabular data in text form
-        df_gen: Pandas DataFrame where the tabular data is appended
-
-    Returns:
-        Pandas DataFrame with the tabular data from the text appended
-    """
-    # print(">>entered _convert_text_to_tabular_data")
     
-    columns = df_gen.columns.to_list()
-    # print(f"columns = {columns}")
-
-    # Convert text to tabular data
-    # print("entering for t in text:")
-    for t in text:   # "t" is the compound sentence, so i'm navigating the list of compound sentences
-        # print(f"t = {t}")
-        features = t.split(",") # i divide the compound sentence "t" in elemental sentences, i call them "features" (later shortened to "f")
-        #  td = dict.fromkeys(columns)  # create a dictionary in which the keys are the column names, the values are None GREAT ORIGINAL, see line below my version
-        td = dict.fromkeys(columns, "0") # my version is to create instead of an empty dictionary, that will be filled with Nones except for the features
-        # for which the tokens have created a sentence, I will create a dictionary of zeros, so for the features the tokens have not generated a sentence for
-        # i will have a zero instead of a None
-        
-        # print("td = dict.fromkeys(columns)")
-        # print(f"td = {td}")
-        
-        # Transform all features back to tabular data
-        for f in features:  # "f" is the elemental sentence, so for example "status is 1"
-            values = f.strip().split(" is ")  # i divide the elemental sentence: "status is 1" gets stored in "values" as values[0]="status", values[1]="1"
-            # print('values = f.strip().split(" is ")')
-            # print(f'values={values}')
-            
-            if values[0] in columns: #and not td[values[0]]: # (2024.01.13 18:45 forse è qui che controlla che tutti i values del df siano pieni?
-                # print("entered: if values[0] in columns:")
-                try:
-                    td[values[0]] = [values[1]]
-                    # print("td[values[0]] = [values[1]]")
-                    # print(f"td[values[0]] = {td[values[0]]}")
-                    # print(f"values[1] = {values[1]}")
-                except IndexError:
-                    #print("An Index Error occurred - if this happends a lot, consider fine-tuning your model further.")
-                    pass
-
-        # print(f"td at the end of the loop on the elemental sentences of one compound sentence: {td}")
-    
-        df_gen = pd.concat([df_gen, pd.DataFrame(td)], ignore_index=True, axis=0)
-        # print("df_gen = pd.concat([df_gen, pd.DataFrame(td)], ignore_index=True, axis=0)")
-        # print(f"df_gen = {df_gen}")
-    return df_gen
 
 def _convert_text_to_tabular_data(text: tp.List[str], df_gen: pd.DataFrame) -> pd.DataFrame:
     """ Converts the sentences back to tabular data
@@ -141,27 +91,25 @@ def _convert_text_to_tabular_data(text: tp.List[str], df_gen: pd.DataFrame) -> p
     Returns:
         Pandas DataFrame with the tabular data from the text appended
     """
+    
     columns = df_gen.columns.to_list()
-        
+
     # Convert text to tabular data
-    for t in text:
-        features = t.split(",")
-        td = dict.fromkeys(columns)  # list of column names
-        # print("td = dict.fromkeys(columns)  # list of column names")
-        # print(f"td = {td}")
-        
+    for t in text:   # "t" is the compound sentence; the loop is iterating over the list of compound sentences
+        features = t.split(",") # split the compound sentence "t" in elemental sentences, i call them "features" (later shortened to "f")
+        td = dict.fromkeys(columns, "0") # create a dictionary filled with 0s
+                
         # Transform all features back to tabular data
-        for f in features:
-            values = f.strip().split(" is ")
-            # print('values = f.strip().split(" is ")')
-            # print(f'values={values}')
+        for f in features:  # "f" is the elemental sentence, so for example "feature_a is x"
+            values = f.strip().split(" is ")  # split the elemental sentence: "feature_a is x" gets stored in "values" as values[0]="feature_a", values[1]="x"
             
-            if values[0] in columns: # and not td[values[0]]: # (2024.01.13 18:45 forse è qui che controlla che tutti i values del df siano pieni?
+            if values[0] in columns: 
                 try:
                     td[values[0]] = [values[1]]
                 except IndexError:
-                    #print("An Index Error occurred - if this happends a lot, consider fine-tuning your model further.")
+                    print("An Index Error occurred - if this happends a lot, consider fine-tuning your model further.")
                     pass
-                
+        
+        # append td to the dataframe of generated samples
         df_gen = pd.concat([df_gen, pd.DataFrame(td)], ignore_index=True, axis=0)
     return df_gen

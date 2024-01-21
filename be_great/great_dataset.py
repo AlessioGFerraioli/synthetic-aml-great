@@ -1,11 +1,14 @@
 '''
 
-from be-great==0.0.4
-_getitem function was edited, the rest is stock
+originally from be-great==0.0.4
+edited version by Alessio Giuseppe Ferraioli
+2024.01.14 last edit 
 
-edited version by alessio
-2024.01.14 
-on 2024.01.14 it was working 
+
+summary of the edits to the original:
+- new version of GReaTDataset._getitem
+
+see readme.md for detailed info
 
 
 '''
@@ -38,24 +41,17 @@ class GReaTDataset(Dataset):
         """ Get Item from Tabular Data
 
         Get one instance of the tabular data, permuted, converted to text and tokenized.
+        If the value of a feature is equal to 0, that feature is ignored and not passed to the tokenizer.
 
-
-         ALESSIO: Ok, This is the one I need to change
-         
         """
-        # If int, what else?             ???????????????????
+        # If int, what else? 
         row = self._data.fast_slice(key, 1)
         
           
         shuffle_idx = list(range(row.num_columns))
         random.shuffle(shuffle_idx)
-        # print("shuffled indices")
         
         bad_word = "0"
-        # print(f"bad word is {bad_word}")
-        #shuffled_text = ", ".join(
-        #    ["%s is %s" % (row.column_names[i], str(row.columns[i].to_pylist()[0]).strip())  for i in shuffle_idx]
-        #)    
         
         text_to_join = []
         for i in shuffle_idx: 
@@ -64,10 +60,7 @@ class GReaTDataset(Dataset):
                 text_to_join.append(text)
         
         shuffled_text = ", ".join(text_to_join)
-        #shuffled_text_alt = 
-        # print(f"text_to_join = {text_to_join}")
         tokenized_text = self.tokenizer(shuffled_text)
-        #tokenized_text = shuffled_text # to be removed afterwards
         return tokenized_text
 
     
