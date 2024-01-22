@@ -30,19 +30,14 @@ These are general advices deducted from lots of tests on various datasets; any a
 After the sampling of synthetic data from the model, an additional post-processing is advised and included in the notebook. The post-processing consists in two steps: manually assigning ```status``` depending on ```time``` and correcting anomalous values eventually present in the mutation features.
 
 __Assigning ```status``` from ```time```__ comes from the assumption that __```status``` is completely determined by ```time```__: we assume that a patient whose ```time``` is equal to the maximum (the maximum value that can be found in the time column) will have ```status=0``` (no event), otherwise ```status=1``` (event). This is not true in general, and we can easily think of cases in which this is not true. For example, a patient could have ```status=0``` and ```time<time_max``` because the communications with that patient ended before the other patients. Or, a patient could have ```status=1``` and ```time=time_max``` if an event happens to be detected at ```time=time_max```. Moreover, this is based on the assumption that the last communications with each ```status=0``` patient happened at the same time, at ```time=time_max```. 
-
 These assumptions limit the generalization of this post-processing, but we can think them as not so far from truth. In a usual data collection scenario, these assumptions hold most of the time; the data entries for which they do not hold are usually a stark minority and could be ignored, treated them as spurious data, without hindering the analysis. On top of that, these assumptions are exactly met in the Tazi et al. AML dataset, so we are safe to say that this post-processing is justified.
 
 
 __Correcting anomalous values in the mutation features__ involves addressing all the synthetic values in the mutation features that are not 0 nor 1. The GReaT model sometimes will mix up similar values from different columns, or generating new values altogether; this results in mutation variables sometimes assuming values slightly different from the admitted ```0``` or ```1``` (e.g.: ```1.05``` or ```0.89```). In the post-processing, they will be set them to ```1``` in any case (instead of ```0```) based on two arguments: first, by design, the model is trained on just the present mutations, so it can be safe to assume that when it produces an output regarding a mutation it is signalling the presence of a mutation, not the absence of it; secondly, in the tests made before writing this, the anomalous values encountered were always numbers close to 1 and never close to 0.
 
 
-- 
--
--
+## synth_analysis.ipynb
 
-
-## analysis
 
 
 

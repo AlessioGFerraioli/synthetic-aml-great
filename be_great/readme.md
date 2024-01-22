@@ -27,7 +27,7 @@ The idea behid this edits is to just train on the actual present events/mutation
 I suppose it would not be so difficult to finesse it in order to have it work more generally. However, this should still work for any dataset in which in which the ```0``` means “no event”.
 
 
-This approach produces somewhat reasonable synthetic data, altough the generated dataframe are slightly sparser than the original. This is probably a consequence of training on short sentences containing very small subsets of features. See also "### Additional thougths regarding sampling" in the "Sampling" section.
+This approach produces somewhat reasonable synthetic data, altough the generated dataframe are slightly sparser than the original (see "Additional thoughs regarding sampling" for an idea on how to solve this problem). This is probably a consequence of training on short sentences containing very small subsets of features. See also "### Additional thougths regarding sampling" in the "Sampling" section.
 
 ## Training  
 Despite the title, I did not edit directly the ```fit``` functions that does the training, but methods called by ```fit``` that handle the encoding of the data into sentences. 
@@ -47,7 +47,8 @@ In other words, setting the ```bad_word = 0``` means that if a feature value is 
 In this way, the compound sentences will be made up of of just features that do not take the value ```0```. 
 
 <ins>Disclaimer</ins>: I know this is a patchy way of doing this, but again, I’m justing writing it to work in my specific case; it could be expanded and generalized.
-I also know that it would be a hundred times better to not hard code the bad word, but having it as a parameter to pass to the fit function, so it could be specified at runtime, and also if no bad word is passed the fit function would behave as usual. Taking into consideration the fact that a model trained in this way will also need a special function for sampling (```sample2```, see “Sampling”), probably a better solution would be to create a variation for the GReaT class altogether, so that when initializing the model, you could choose whether or not to pass a bad word, and the sample function would work accordingly. 
+
+__ToDo__: it would be a hundred times better to not hard code the bad word, but having it as a parameter to pass to the fit function, so it could be specified at runtime, and if no bad word is passed the fit function would behave as usual. Taking into consideration the fact that a model trained in this way will also need a special function for sampling (see “Sampling”), probably a better solution would be to create a variation for the GReaT class altogether, so that when initializing the model, you could choose whether or not to pass a bad word, and the sample function would work accordingly. 
 
 ## Sampling 
 ### Original Workflow
@@ -67,8 +68,18 @@ In my case, I do not expect the compound sentences to contain all the features, 
 
 The main difference between my code and the original is that I will initialize ```td``` (the dictionary in which I store the values for a given compound sentence, that would later become a row in the dataframe) as all zeros, instead of empty. This will make sure that any feature that is not contained in the compound sentence will be considered as ```0```, meaning “no event”/”no mutation”. 
 
-### Additional thougths regarding samplingEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+### Additional thougths regarding sampling
 
-il fatto che vengono generati token che a volte sono "AMXL is 0". le vogliamo cosniderare come event signaling, so put them to 1?
+The model is trained on just sentences that signal the presence of a mutation, e.g.: ```AMXL is 1```, and never on sentences that signals the absence of a mutation, e.g.: something like ```AMXL is 0``` is never seen at training. For this reason, it could be expected that the generated synthetic sentences would all signal the presence of a mutation, i.e.: they would be in the form of ```mutation is 1``` and never ```mutation is 0```. However, since the model uses pre-trained large language models that already have a large prior knowledge of the english language, it is not uncommon that a sentence like ```mutation is 0``` is produced. What to do with these sentences? We could either take them as they are and registering a ```0```, or assume that the fact that a mutation is mentioned would correspond to the presence of an event, so registering a ```1```. 
+In the first case, we would be _trusting_ the prior knowledge of the model and assume it producing the absence of a mutation is meaningful even if not seen at training. In the second case, we would give more importance to the the training process and assume that any time the model mentions a mutation it is mentioning the presence of an event, regardless of the actual ```0``` or ```1``` it produces. 
+
+These scripts are written by assuming the first case. The motivation behind it is the interest in leveraging the a priori contextual knowledge of the large language models. To implement the second case would not be very difficult but the effect of it was not tested at all. Maybe, using the second case could help solving the problem of the relative sparsity of the synthetic data, because it would produce more mutations than the first case. I suppose it could help populating the dataset more, but at the expense of learning the correlations between features. I did not test this, this is just a guess of what could happen.
+
+
+__ToDo__: implement the possibility of choosing what to do when a generated sentence signals the absence of mutation (i.e.: taking it as is or imputing it to be the presence of a mutation)
 
 ## Post-Processing 
+
+The generated synthetic data is expected to go through a post-processing stage, in which ```status``` is assigned depending on ```time``` and anomalous values in mutation features are corrected. This post-processing stage is not included in the script found in this folder, but can be found in [```great_synth.ipynb```](https://github.com/AlessioGFerraioli/synthetic-aml-great/blob/8725d548c8e2ccd3abd434a29e89db58a593c810/great_synth.ipynb). See the associated [README](https://github.com/AlessioGFerraioli/synthetic-aml-great/blob/8725d548c8e2ccd3abd434a29e89db58a593c810/README.md) for info. 
+
+__ToDo__: include the post-processing in this package for ease of use.
