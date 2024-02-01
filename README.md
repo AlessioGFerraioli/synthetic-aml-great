@@ -40,4 +40,5 @@ __Correcting anomalous values in the mutation features__ involves addressing all
 
 ## synth_analysis.ipynb
 
-To be added..
+This notebook contains some functions to perform some integrity and quality analysis on synthetic data.
+__Note__: it is written to do specific analysis on the data I have, so it is not always written in a general or modular way. It is also bound to this specific data, since for simplicity I hard coded some specifi of this dataset (for example, names of features to drop, number of rows etc..). Anyway it should still work on any synthetic AML dataset. Everything could be written in a better way; most of all, the data structures could also be improved a lot. It could also be useful in taking the functions scattered throughout the notebook and organize them, maybe as methods of a couple of well planned classes. This notebook was written little by little and starting with no real plan so there was no planning whatsoever. Good luck. (well, they DO work, at least, so it's not completely useless)
