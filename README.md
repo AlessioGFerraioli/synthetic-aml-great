@@ -3,7 +3,7 @@ Generation and evaluation of synthetic AML patients data for master thesis proje
 
 Generation of synthetic data is done with a slightly modified version of [@kathrinse/be-great](https://github.com/kathrinse/be_great/tree/main). 
 
-This is a working repository that collects my work for the thesis.
+This is a working repository with the purpose of collecting my work for the thesis and sharing it with members of the team.
 
 # Installation
 
