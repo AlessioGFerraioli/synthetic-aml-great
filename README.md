@@ -1,5 +1,9 @@
 # synthetic-aml-great
-Generation and evaluation of synthetic AML patients data with a modified version of [@kathrinse/be-great](https://github.com/kathrinse/be_great/tree/main)
+Generation and evaluation of synthetic AML patients data for master thesis project, Applied Physics curriculum at Alma Mater Studiorum Università degli Studi di Bologna.
+
+Generation of synthetic data is done with a slightly modified version of [@kathrinse/be-great](https://github.com/kathrinse/be_great/tree/main). 
+
+This is a working repository that collects my work for the thesis.
 
 # Installation
 
